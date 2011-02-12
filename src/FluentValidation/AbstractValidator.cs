@@ -16,7 +16,8 @@
 // The latest version of this file can be found at http://www.codeplex.com/FluentValidation
 #endregion
 
-namespace FluentValidation {
+namespace FluentValidation
+{
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
@@ -25,12 +26,14 @@ namespace FluentValidation {
 	using Internal;
 	using Results;
 	using Validators;
+	using System.Reflection;
 
 	/// <summary>
 	/// Base class for entity validator classes.
 	/// </summary>
 	/// <typeparam name="T">The type of the object being validated</typeparam>
-	public abstract class AbstractValidator<T> : IValidator<T>, IEnumerable<IValidationRule> {
+	public abstract class AbstractValidator<T> : IValidator<T>, IEnumerable<IValidationRule>
+	{
 		readonly List<IValidationRule> nestedValidators = new List<IValidationRule>();
 		string currentRuleSetName = null;
 
@@ -39,19 +42,22 @@ namespace FluentValidation {
 		/// <summary>
 		/// Sets the cascade mode for all rules within this validator.
 		/// </summary>
-		public CascadeMode CascadeMode {
+		public CascadeMode CascadeMode
+		{
 			get { return cascadeMode(); }
 			set { cascadeMode = () => value; }
 		}
 
-		ValidationResult IValidator.Validate(object instance) {
-			return Validate((T)instance);
+		ValidationResult IValidator.Validate( object instance )
+		{
+			return Validate( (T)instance );
 		}
 
-		ValidationResult IValidator.Validate(ValidationContext context) {
-			context.Guard("Cannot pass null to Validate");
-			var failures = nestedValidators.SelectMany(x => x.Validate(context)).ToList();
-			return new ValidationResult(failures);
+		ValidationResult IValidator.Validate( ValidationContext context )
+		{
+			context.Guard( "Cannot pass null to Validate" );
+			var failures = nestedValidators.SelectMany( x => x.Validate( context ) ).ToList();
+			return new ValidationResult( failures );
 		}
 
 		/// <summary>
@@ -59,42 +65,48 @@ namespace FluentValidation {
 		/// </summary>
 		/// <param name="instance">The object to validate</param>
 		/// <returns>A ValidationResult object containing any validation failures</returns>
-		public virtual ValidationResult Validate(T instance) {
-			return Validate(new ValidationContext<T>(instance, new PropertyChain(), new DefaultValidatorSelector()));
+		public virtual ValidationResult Validate( T instance )
+		{
+			return Validate( new ValidationContext<T>( instance, new PropertyChain(), new DefaultValidatorSelector() ) );
 		}
-		
+
 		/// <summary>
 		/// Validates the specified instance.
 		/// </summary>
 		/// <param name="context">Validation Context</param>
 		/// <returns>A ValidationResult object containing any validation failures.</returns>
-		public virtual ValidationResult Validate(ValidationContext<T> context) {
-			context.Guard("Cannot pass null to Validate");
-			var failures = nestedValidators.SelectMany(x => x.Validate(context)).ToList();
-			return new ValidationResult(failures);
+		public virtual ValidationResult Validate( ValidationContext<T> context )
+		{
+			context.Guard( "Cannot pass null to Validate" );
+			var failures = nestedValidators.SelectMany( x => x.Validate( context ) ).ToList();
+			return new ValidationResult( failures );
 		}
 
 		/// <summary>
 		/// Adds a rule to the current validator.
 		/// </summary>
 		/// <param name="rule"></param>
-		public void AddRule(IValidationRule rule) {
-			if(currentRuleSetName != null) {
+		public void AddRule( IValidationRule rule )
+		{
+			if ( currentRuleSetName != null )
+			{
 				rule.RuleSet = currentRuleSetName;
 			}
 
-			nestedValidators.Add(rule);
+			nestedValidators.Add( rule );
 		}
 
 		/// <summary>
 		/// Creates a <see cref="IValidatorDescriptor" /> that can be used to obtain metadata about the current validator.
 		/// </summary>
-		public virtual IValidatorDescriptor CreateDescriptor() {
-			return new ValidatorDescriptor<T>(nestedValidators);
+		public virtual IValidatorDescriptor CreateDescriptor()
+		{
+			return new ValidatorDescriptor<T>( nestedValidators );
 		}
 
-		bool IValidator.CanValidateInstancesOfType(Type type) {
-			return typeof(T).IsAssignableFrom(type);
+		bool IValidator.CanValidateInstancesOfType( Type type )
+		{
+			return typeof( T ).IsAssignableFrom( type );
 		}
 
 		/// <summary>
@@ -106,11 +118,12 @@ namespace FluentValidation {
 		/// <typeparam name="TProperty">The type of property being validated</typeparam>
 		/// <param name="expression">The expression representing the property to validate</param>
 		/// <returns>an IRuleBuilder instance on which validators can be defined</returns>
-		public IRuleBuilderInitial<T, TProperty> RuleFor<TProperty>(Expression<Func<T, TProperty>> expression) {
-			expression.Guard("Cannot pass null to RuleFor");
-			var rule = PropertyRule.Create(expression, () => CascadeMode);
-			AddRule(rule);
-			var ruleBuilder = new RuleBuilder<T, TProperty>(rule);
+		public IRuleBuilderInitial<T, TProperty> RuleFor<TProperty>( Expression<Func<T, TProperty>> expression )
+		{
+			expression.Guard( "Cannot pass null to RuleFor" );
+			var rule = PropertyRule.Create( expression, () => CascadeMode );
+			AddRule( rule );
+			var ruleBuilder = new RuleBuilder<T, TProperty>( rule );
 			return ruleBuilder;
 		}
 
@@ -120,9 +133,10 @@ namespace FluentValidation {
 		/// If the validation rule succeeds, it should return null.
 		/// </summary>
 		/// <param name="customValidator">A lambda that executes custom validation rules.</param>
-		public void Custom(Func<T, ValidationFailure> customValidator) {
-			customValidator.Guard("Cannot pass null to Custom");
-			AddRule(new DelegateValidator<T>(x => new[] { customValidator(x) }));
+		public void Custom( Func<T, ValidationFailure> customValidator )
+		{
+			customValidator.Guard( "Cannot pass null to Custom" );
+			AddRule( new DelegateValidator<T>( x => new[] { customValidator( x ) } ) );
 		}
 
 		/// <summary>
@@ -131,9 +145,10 @@ namespace FluentValidation {
 		/// If the validation rule succeeds, it should return null.
 		/// </summary>
 		/// <param name="customValidator">A lambda that executes custom validation rules</param>
-		public void Custom(Func<T, ValidationContext<T>, ValidationFailure> customValidator) {
-			customValidator.Guard("Cannot pass null to Custom");
-			AddRule(new DelegateValidator<T>((x, ctx) => new[] { customValidator(x, ctx) }));
+		public void Custom( Func<T, ValidationContext<T>, ValidationFailure> customValidator )
+		{
+			customValidator.Guard( "Cannot pass null to Custom" );
+			AddRule( new DelegateValidator<T>( ( x, ctx ) => new[] { customValidator( x, ctx ) } ) );
 		}
 
 		/// <summary>
@@ -141,17 +156,25 @@ namespace FluentValidation {
 		/// </summary>
 		/// <param name="ruleSetName">The name of the ruleset.</param>
 		/// <param name="action">Action that encapsulates the rules in the ruleset.</param>
-		public void RuleSet(string ruleSetName, Action action) {
-			ruleSetName.Guard("A name must be specified when calling RuleSet.");
-			action.Guard("A ruleset definition must be specified when calling RuleSet.");
+		public void RuleSet( string ruleSetName, Action action )
+		{
+			ruleSetName.Guard( "A name must be specified when calling RuleSet." );
+			action.Guard( "A ruleset definition must be specified when calling RuleSet." );
 
-			try {
+			try
+			{
 				currentRuleSetName = ruleSetName;
 				action();
 			}
-			finally {
+			finally
+			{
 				currentRuleSetName = null;
 			}
+		}
+
+		public NestedConditionalRuleHelper<T> When( Func<T, bool> predicate )
+		{
+			return new NestedConditionalRuleHelper<T>( predicate );
 		}
 
 		/// <summary>
@@ -161,12 +184,85 @@ namespace FluentValidation {
 		/// A <see cref="T:System.Collections.Generic.IEnumerator`1"/> that can be used to iterate through the collection.
 		/// </returns>
 		/// <filterpriority>1</filterpriority>
-		public IEnumerator<IValidationRule> GetEnumerator() {
+		public IEnumerator<IValidationRule> GetEnumerator()
+		{
 			return nestedValidators.GetEnumerator();
 		}
 
-		IEnumerator IEnumerable.GetEnumerator() {
+		IEnumerator IEnumerable.GetEnumerator()
+		{
 			return GetEnumerator();
+		}
+	}
+
+	public class NestedConditionalRuleHelper<T>
+	{
+		Func<T, bool> whenPredicate;
+		Dictionary<Type, IList<object>> ruleOptions;
+
+		public NestedConditionalRuleHelper()
+			: this( x => true )
+		{
+		}
+
+		public NestedConditionalRuleHelper( Func<T, bool> whenPredicate )
+		{
+			this.whenPredicate = whenPredicate;
+			this.ruleOptions = new Dictionary<Type, IList<object>>();
+		}
+
+		public void Unless( Func<T, bool> predicate )
+		{
+			foreach ( var pair in ruleOptions )
+			{
+				Type typeOfRuleOptions = pair.Key;
+
+				Type generic = typeof( UnlessVisistor<> );
+				Type specific = generic.MakeGenericType( typeof( T ), typeOfRuleOptions );
+				ConstructorInfo ctorInfo = specific.GetConstructor( new Type[] { predicate.GetType() } );
+				object o = ctorInfo.Invoke( new object[] { predicate } );
+				IUnlessVisistor visitor = o as IUnlessVisistor;
+				visitor.Visit( pair.Value );
+			}
+		}
+
+		public interface IUnlessVisistor
+		{
+			void Visit( IList<object> rulesToVisit );
+		}
+
+		public class UnlessVisistor<TProperty> : IUnlessVisistor
+		{
+			Func<T, bool> unlessClause;
+
+			public UnlessVisistor( Func<T, bool> unlessClause )
+			{
+				this.unlessClause = unlessClause;
+			}
+
+			public void Visit( IList<object> rulesToVisit )
+			{
+				foreach ( var rule in rulesToVisit.Cast<IRuleBuilderOptions<T, TProperty>>() )
+				{
+					rule.Unless( unlessClause );
+				}
+			}
+		}
+
+		public NestedConditionalRuleHelper<T> Add<TProperty>( IRuleBuilderOptions<T, TProperty> builderOptions )
+		{
+			builderOptions.When( whenPredicate );
+
+			Type typeOfProperty = typeof( TProperty );
+
+			if ( !ruleOptions.ContainsKey( typeOfProperty ) )
+			{
+				ruleOptions.Add( typeOfProperty, new List<object>() );
+			}
+
+			ruleOptions[typeOfProperty].Add( builderOptions );
+
+			return this;
 		}
 	}
 }
